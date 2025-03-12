@@ -571,7 +571,9 @@ def main():
 
 if __name__ == "__main__":
     main()
-def setup_2fa():
+tab7 = st.tabs(["🛠️ Generadores", "🔒 Bóveda", "🔍 Analizador", "💬 Chatbot", "🌐 Escáner Web", "🔐 Verificador de Fugas", "🛡️ 2FA"])
+
+with tab7:
     st.subheader("🛡️ Configuración de 2FA")
 
     if "2fa_secret" not in st.session_state:
@@ -593,7 +595,3 @@ def setup_2fa():
             st.success("✅ Código válido. Autenticación exitosa.")
         else:
             st.error("❌ Código incorrecto. Inténtalo de nuevo.")
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([...])
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["🛠️ Generadores", "🔒 Bóveda", "🔍 Analizador", "💬 Chatbot", "🌐 Escáner Web", "🔐 Verificador de Fugas", "🛡️ 2FA"])
-with tab7:
-    setup_2fa()
