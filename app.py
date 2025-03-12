@@ -16,6 +16,7 @@ import json
 import pyotp
 import qrcode
 from io import BytesIO
+from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from cryptography.fernet import Fernet
@@ -23,61 +24,55 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 from tensorflow.keras.callbacks import EarlyStopping
 
-# Configura el título de la pestaña y el ícono de candado
-st.set_page_config(page_title="WildPassPro", page_icon="🔒")
+# Cargar variables de entorno
+load_dotenv()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+MASTER_PASSWORD = os.getenv("MASTER_PASSWORD")
 
-# Configuración de Groq
-GROQ_API_KEY = "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"
-MODEL_NAME = "llama3-70b-8192"
+if not GROQ_API_KEY or not MASTER_PASSWORD:
+    st.error("❌ Error: Faltan credenciales en el archivo .env")
+    st.stop()
 
 client = openai.OpenAI(
     base_url="https://api.groq.com/openai/v1",
     api_key=GROQ_API_KEY
 )
 
-# ========== NUEVAS CONSTANTES ==========
-MASTER_PASSWORD = "WildPassPro2024!"  # Contraseña maestra (cambiar en producción)
-
-# ========== FUNCIONES DE SEGURIDAD ==========
+# ======= SEGURIDAD =======
 def generar_clave_cifrado():
-    if not os.path.exists("clave.key"):
+    clave_path = "clave.key"
+    if not os.path.exists(clave_path):
         clave = Fernet.generate_key()
-        with open("clave.key", "wb") as archivo_clave:
+        with open(clave_path, "wb") as archivo_clave:
             archivo_clave.write(clave)
-    return open("clave.key", "rb").read()
+    with open(clave_path, "rb") as archivo_clave:
+        return archivo_clave.read()
 
 CLAVE_CIFRADO = generar_clave_cifrado()
 fernet = Fernet(CLAVE_CIFRADO)
 
 def cifrar_archivo(ruta_archivo):
-    with open(ruta_archivo, "rb") as archivo:
-        datos = archivo.read()
-    datos_cifrados = fernet.encrypt(datos)
-    with open(ruta_archivo + ".encrypted", "wb") as archivo_cifrado:
-        archivo_cifrado.write(datos_cifrados)
-    os.remove(ruta_archivo)
-    return f"{ruta_archivo}.encrypted"
+    try:
+        with open(ruta_archivo, "rb") as archivo:
+            datos = archivo.read()
+        with open(ruta_archivo + ".encrypted", "wb") as archivo_cifrado:
+            archivo_cifrado.write(fernet.encrypt(datos))
+        os.remove(ruta_archivo)
+    except Exception as e:
+        st.error(f"Error al cifrar archivo: {e}")
 
 def descifrar_archivo(ruta_archivo):
-    with open(ruta_archivo, "rb") as archivo:
-        datos_cifrados = archivo.read()
-    datos_descifrados = fernet.decrypt(datos_cifrados)
-    ruta_original = ruta_archivo.replace(".encrypted", "")
-    with open(ruta_original, "wb") as archivo_descifrado:
-        archivo_descifrado.write(datos_descifrados)
+    try:
+        with open(ruta_archivo, "rb") as archivo:
+            datos_cifrados = archivo.read()
+        ruta_original = ruta_archivo.replace(".encrypted", "")
+        with open(ruta_original, "wb") as archivo_descifrado:
+            archivo_descifrado.write(fernet.decrypt(datos_cifrados))
+    except Exception as e:
+        st.error(f"Error al descifrar archivo: {e}")
     return ruta_original
 
-# ========== EFECTO MAQUINA DE ESCRIBIR ==========
-def typewriter_effect(text):
-    placeholder = st.empty()
-    displayed_text = ""
-    for char in text:
-        displayed_text += char
-        placeholder.markdown(f'<div class="chat-message">{displayed_text}</div>', unsafe_allow_html=True)
-        time.sleep(0.02)
-    return displayed_text
-
-# ========== FUNCIONES PRINCIPALES ==========
+# ======= GENERACIÓN DE CONTRASEÑAS =======
 def generate_secure_password(length=16):
     characters = string.ascii_letters + string.digits + "!@#$%^&*()"
     return ''.join(secrets.choice(characters) for _ in range(length))
@@ -85,18 +80,11 @@ def generate_secure_password(length=16):
 def generate_access_key():
     return secrets.token_urlsafe(32)
 
-def load_weak_passwords(url):
-    response = requests.get(url)
-    return set(line.strip().lower() for line in response.text.splitlines() if line.strip())
-
-WEAK_PASSWORDS = load_weak_passwords("https://github.com/AndersonP444/PROYECTO-IA-SIC-The-Wild-Project/raw/main/rockyou.txt")
-
+# ======= ANALISIS DE CONTRASEÑAS =======
 def detect_weakness(password):
     weaknesses = []
-    password_lower = password.lower()
-    
-    if password_lower in WEAK_PASSWORDS:
-        weaknesses.append("❌ Está en la lista rockyou.txt")
+    if len(password) < 12:
+        weaknesses.append("❌ Longitud insuficiente (mínimo 12 caracteres)")
     if password.islower():
         weaknesses.append("❌ Solo minúsculas")
     if password.isupper():
@@ -105,33 +93,88 @@ def detect_weakness(password):
         weaknesses.append("❌ Sin números")
     if not any(c in "!@#$%^&*()" for c in password):
         weaknesses.append("❌ Sin símbolos")
-    if len(password) < 12:
-        weaknesses.append(f"❌ Longitud insuficiente ({len(password)}/12)")
-    if password_lower in ["diego", "juan", "maria", "pedro", "media"]:
-        weaknesses.append("❌ Contiene un nombre común")
-    if "123" in password or "abc" in password_lower or "809" in password:
-        weaknesses.append("❌ Contiene una secuencia simple")
-        
     return weaknesses
 
 def groq_analysis(password):
     try:
         response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[{
-                "role": "user",
-                "content": f"""Analiza esta contraseña: '{password}'
-                1. Vulnerabilidades críticas (longitud, complejidad, nombres comunes, secuencias simples)
-                2. Comparación con patrones comunes (nombres propios, secuencias numéricas)
-                3. Recomendaciones personalizadas (longitud mínima, uso de símbolos, evitar nombres comunes)
-                Formato: Lista markdown con emojis"""
-            }],
+            model="llama3-70b-8192",
+            messages=[{"role": "user", "content": f"Analiza la contraseña: {password}"}],
             temperature=0.4,
             max_tokens=400
         )
         return response.choices[0].message.content
+    except openai.error.OpenAIError as e:
+        return f"Error con API de Groq: {str(e)}"
     except Exception as e:
-        return f"**Error:** {str(e)}"
+        return f"Error inesperado: {str(e)}"
+
+# ======= BÓVEDA DE CONTRASEÑAS =======
+def guardar_contraseña(sitio, usuario, contraseña):
+    try:
+        archivo = "passwords.json"
+        if os.path.exists(archivo + ".encrypted"):
+            descifrar_archivo(archivo + ".encrypted")
+        else:
+            with open(archivo, "w") as f:
+                json.dump([], f)
+
+        with open(archivo, "r") as f:
+            datos = json.load(f)
+        
+        datos.append({"sitio": sitio, "usuario": usuario, "contraseña": fernet.encrypt(contraseña.encode()).decode()})
+        with open(archivo, "w") as f:
+            json.dump(datos, f)
+        cifrar_archivo(archivo)
+    except Exception as e:
+        st.error(f"Error al guardar contraseña: {e}")
+
+def obtener_contraseñas():
+    archivo = "passwords.json.encrypted"
+    if not os.path.exists(archivo):
+        return []
+    descifrar_archivo(archivo)
+    with open("passwords.json", "r") as f:
+        datos = json.load(f)
+    cifrar_archivo("passwords.json")
+    for item in datos:
+        item["contraseña"] = fernet.decrypt(item["contraseña"].encode()).decode()
+    return datos
+
+# ======= VERIFICADOR DE FUGAS =======
+def verificar_fuga_datos(password):
+    try:
+        sha1_password = hashlib.sha1(password.encode()).hexdigest().upper()
+        prefix, suffix = sha1_password[:5], sha1_password[5:]
+        response = requests.get(f"https://api.pwnedpasswords.com/range/{prefix}")
+        if response.status_code == 200:
+            for line in response.text.splitlines():
+                if line.startswith(suffix):
+                    count = int(line.split(":")[1])
+                    return f"⚠️ Advertencia: La contraseña ha aparecido en {count} fugas de datos."
+            return "✅ Segura: No ha sido expuesta en fugas de datos."
+        else:
+            return "🔴 Error: No se pudo verificar la contraseña."
+    except Exception as e:
+        return f"🔴 Error: {str(e)}"
+
+# ======= INICIALIZAR INTERFAZ =======
+if __name__ == "__main__":
+    st.title("🔐 WildPassPro - Seguridad Digital")
+    st.subheader("Generador de Contraseñas")
+    if st.button("Generar Contraseña Segura"):
+        st.success(generate_secure_password())
+    
+    st.subheader("Analizar Seguridad de Contraseña")
+    password = st.text_input("Introduce una contraseña para analizar:", type="password")
+    if st.button("Analizar") and password:
+        st.write("Fortaleza de la contraseña:")
+        st.write(detect_weakness(password))
+    
+    st.subheader("Verificador de Fugas de Datos")
+    if st.button("Verificar Fuga") and password:
+        st.write(verificar_fuga_datos(password))
+
 
 # ========== FUNCIONES DE LA RED NEURONAL ==========
 def crear_modelo():
