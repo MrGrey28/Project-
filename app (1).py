@@ -573,8 +573,9 @@ def main():
             else:
                 st.error("Por favor, ingresa una contraseña para verificar.")
                 
-     with tab7:
-    setup_2fa() 
+    with tab7:
+    st.subheader("🛡️ Configuración de 2FA")
+
     if "2fa_secret" not in st.session_state:
         st.session_state["2fa_secret"] = pyotp.random_base32()
 
