@@ -402,11 +402,7 @@ def main():
     else:
         model = tf.keras.models.load_model("password_strength_model.h5")
 
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "🛠️ Generadores", "🔒 Bóveda", "🔍 Analizador", 
-    "💬 Chatbot", "🌐 Escáner Web", "🔐 Verificador de Fugas", "🛡️ 2FA"
-])
-
+  tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["🛠️ Generadores", "🔒 Bóveda", "🔍 Analizador", "💬 Chatbot", "🌐 Escáner Web", "🔐 Verificador de Fugas","🛡️ 2FA"])
 
     with tab1:
         st.subheader("🛠️ Generadores")
@@ -595,7 +591,6 @@ def main():
             st.success("✅ Código válido. Autenticación exitosa.")
         else:
             st.error("❌ Código incorrecto. Inténtalo de nuevo.")
-sed -i 's/\t/    /g' app.py
 
 
             
