@@ -568,7 +568,7 @@ def main():
                 st.markdown(resultado)
             else:
                 st.error("Por favor, ingresa una contraseña para verificar.")
-    def new_func(tab7):
+                
     with tab7:
         st.subheader("🛡️ Configuración de 2FA")
 
