@@ -595,6 +595,7 @@ def main():
             st.success("✅ Código válido. Autenticación exitosa.")
         else:
             st.error("❌ Código incorrecto. Inténtalo de nuevo.")
+sed -i 's/\t/    /g' app.py
 
 if __name__ == "__main__":
     main()
