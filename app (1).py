@@ -572,8 +572,9 @@ def main():
                 st.markdown(resultado)
             else:
                 st.error("Por favor, ingresa una contraseña para verificar.")
+                
      with tab7:
-    setup_2fa()  
+    st.subheader("🛡️ Configuración de 2FA")
 
     if "2fa_secret" not in st.session_state:
         st.session_state["2fa_secret"] = pyotp.random_base32()
@@ -598,25 +599,4 @@ def main():
 if __name__ == "__main__":
     main()
     
-with tab7:
-    st.subheader("🛡️ Configuración de 2FA")
 
-    if "2fa_secret" not in st.session_state:
-        st.session_state["2fa_secret"] = pyotp.random_base32()
-
-    st.markdown("### Escanea este código QR con Google Authenticator")
-    otp_auth_url = pyotp.totp.TOTP(st.session_state["2fa_secret"]).provisioning_uri(name="Usuario", issuer_name="WildPassPro")
-    qr = qrcode.make(otp_auth_url)
-    buffer = BytesIO()
-    qr.save(buffer, format="PNG")
-    st.image(buffer.getvalue(), caption="Escanea este código QR para configurar tu 2FA")
-
-    st.markdown("### Verifica tu Código OTP")
-    user_otp = st.text_input("Introduce el código de 6 dígitos", max_chars=6)
-
-    if st.button("Verificar Código"):
-        totp = pyotp.TOTP(st.session_state["2fa_secret"])
-        if totp.verify(user_otp):
-            st.success("✅ Código válido. Autenticación exitosa.")
-        else:
-            st.error("❌ Código incorrecto. Inténtalo de nuevo.")
