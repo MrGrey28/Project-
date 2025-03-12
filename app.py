@@ -1,4 +1,4 @@
-import streamlit as st
+iimport streamlit as st
 import hashlib
 import pandas as pd
 import numpy as np
@@ -402,7 +402,7 @@ def main():
     else:
         model = tf.keras.models.load_model("password_strength_model.h5")
 
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["🛠️ Generadores", "🔒 Bóveda", "🔍 Analizador", "💬 Chatbot", "🌐 Escáner Web", "🔐 Verificador de Fugas","🛡️ 2FA"])
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["🛠️ Generadores", "🔒 Bóveda", "🔍 Analizador", "💬 Chatbot", "🌐 Escáner Web", "🔐 Verificador de Fugas", "🛡️ 2FA"])
 
     with tab1:
         st.subheader("🛠️ Generadores")
@@ -569,10 +569,8 @@ def main():
             else:
                 st.error("Por favor, ingresa una contraseña para verificar.")
                 
-    # ...existing code...
-
     with tab7:
-    st.subheader("🛡️ Configuración de 2FA")
+        st.subheader("🛡️ Configuración de 2FA")
 
     # Generar o recuperar el secret de 2FA
     if "2fa_secret" not in st.session_state:
@@ -603,8 +601,5 @@ def main():
         else:
             st.error("❌ Por favor, ingresa un código válido de 6 dígitos.")
 
-# ...existing code...
-            
 if __name__ == "__main__":
     main()
-
