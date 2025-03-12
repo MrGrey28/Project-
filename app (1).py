@@ -571,8 +571,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-tab7 = st.tabs(["🛠️ Generadores", "🔒 Bóveda", "🔍 Analizador", "💬 Chatbot", "🌐 Escáner Web", "🔐 Verificador de Fugas", "🛡️ 2FA"])
-
+    
 with tab7:
     st.subheader("🛡️ Configuración de 2FA")
 
