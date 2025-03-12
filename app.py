@@ -568,38 +568,36 @@ def main():
                 st.markdown(resultado)
             else:
                 st.error("Por favor, ingresa una contraseña para verificar.")
-                
     with tab7:
         st.subheader("🛡️ Configuración de 2FA")
 
-    # Generar o recuperar el secret de 2FA
-    if "2fa_secret" not in st.session_state:
-        st.session_state["2fa_secret"] = pyotp.random_base32()
+        # Generar o recuperar el secret de 2FA
+        if "2fa_secret" not in st.session_state:
+            st.session_state["2fa_secret"] = pyotp.random_base32()
 
-    # Crear la URL de provisión del código QR
-    st.markdown("### Escanea este código QR con Google Authenticator")
-    otp_auth_url = pyotp.totp.TOTP(st.session_state["2fa_secret"]).provisioning_uri(name="Usuario", issuer_name="WildPassPro")
-    
-    # Generar el código QR
-    qr = qrcode.make(otp_auth_url)
-    buffer = BytesIO()
-    qr.save(buffer, format="PNG")
-    st.image(buffer.getvalue(), caption="Escanea este código QR para configurar tu 2FA")
+        # Crear la URL de provisión del código QR
+        st.markdown("### Escanea este código QR con Google Authenticator")
+        otp_auth_url = pyotp.totp.TOTP(st.session_state["2fa_secret"]).provisioning_uri(name="Usuario", issuer_name="WildPassPro")
+        
+        # Generar el código QR
+        qr = qrcode.make(otp_auth_url)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        st.image(buffer.getvalue(), caption="Escanea este código QR para configurar tu 2FA")
 
-    # Entrada del código OTP
-    st.markdown("### Verifica tu Código OTP")
-    user_otp = st.text_input("Introduce el código de 6 dígitos", max_chars=6)
+        # Entrada del código OTP
+        st.markdown("### Verifica tu Código OTP")
+        user_otp = st.text_input("Introduce el código de 6 dígitos", max_chars=6)
 
-    # Verificar si el código OTP es válido
-    if st.button("Verificar Código"):
-        if len(user_otp) == 6 and user_otp.isdigit():  # Verificar que sea un código de 6 dígitos
-            totp = pyotp.TOTP(st.session_state["2fa_secret"])
-            if totp.verify(user_otp):
-                st.success("✅ Código válido. Autenticación exitosa.")
+        # Verificar si el código OTP es válido
+        if st.button("Verificar Código"):
+            if len(user_otp) == 6 and user_otp.isdigit():  # Verificar que sea un código de 6 dígitos
+                totp = pyotp.TOTP(st.session_state["2fa_secret"])
+                if totp.verify(user_otp):
+                    st.success("✅ Código válido. Autenticación exitosa.")
+                else:
+                    st.error("❌ Código incorrecto. Inténtalo de nuevo.")
             else:
-                st.error("❌ Código incorrecto. Inténtalo de nuevo.")
-        else:
-            st.error("❌ Por favor, ingresa un código válido de 6 dígitos."))
-            
-if __name__ == "__main__":
+                st.error("❌ Por favor, ingresa un código válido de 6 dígitos.")
+if __name__ == "__main__":    
     main()
